@@ -1,0 +1,70 @@
+# Default configuration for COI Agent RLHF pipeline
+
+model:
+  name: "Qwen/Qwen2.5-7B"
+  max_length: 2048
+  device: "auto"
+
+simulator:
+  max_turns: 10
+  num_dialogues: 100
+  end_conditions:
+    - "successful_conversion"
+    - "explicit_rejection"
+    - "max_turns_reached"
+  output_path: "data/output/simulated_dialogues.jsonl"
+
+coi_evaluator:
+  intent_categories:
+    - "information_inquiry"
+    - "job_recommendation"
+    - "requirement_clarification"
+    - "salary_negotiation"
+    - "benefit_discussion"
+    - "hesitation"
+    - "explicit_rejection"
+    - "successful_conversion"
+    - "follow_up"
+  style_sim_weight: 0.3
+  result_f1_weight: 0.3
+  coi_kl_weight: 0.4
+  preference_output_path: "data/output/preference_data.jsonl"
+
+sft:
+  learning_rate: 2.0e-5
+  num_epochs: 3
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  max_seq_length: 2048
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  lora_target_modules:
+    - "q_proj"
+    - "v_proj"
+  output_dir: "models/sft"
+
+reward_model:
+  learning_rate: 1.0e-5
+  num_epochs: 1
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  max_seq_length: 2048
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  lora_target_modules:
+    - "q_proj"
+    - "v_proj"
+  output_dir: "models/reward_model"
+
+ppo:
+  learning_rate: 1.0e-5
+  batch_size: 4
+  mini_batch_size: 2
+  ppo_epochs: 4
+  max_new_tokens: 256
+  kl_penalty: 0.2
+  alpha_rule: 0.3
+  beta_model: 0.7
+  output_dir: "models/ppo"
