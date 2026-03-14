@@ -10,15 +10,6 @@ import logging
 import os
 from dataclasses import dataclass, field
 
-import torch
-from datasets import Dataset
-from peft import LoraConfig, TaskType, get_peft_model
-from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-)
-from trl import RewardConfig, RewardTrainer
-
 from src.utils.data_utils import load_jsonl
 
 logger = logging.getLogger(__name__)
@@ -49,7 +40,7 @@ class RMTrainerConfig:
 
 def prepare_rm_dataset(
     preference_pairs: list[dict], tokenizer
-) -> Dataset:
+):
     """
     Convert preference pairs to the format expected by RewardTrainer.
 
@@ -82,14 +73,16 @@ def prepare_rm_dataset(
         chosen_texts.append(chosen_text)
         rejected_texts.append(rejected_text)
 
+    from datasets import Dataset
     return Dataset.from_dict({
         "chosen": chosen_texts,
         "rejected": rejected_texts,
     })
 
 
-def build_rm_lora_config(config: RMTrainerConfig) -> LoraConfig:
+def build_rm_lora_config(config: RMTrainerConfig):
     """Create a LoRA configuration for the reward model."""
+    from peft import LoraConfig, TaskType
     return LoraConfig(
         r=config.lora_r,
         lora_alpha=config.lora_alpha,
@@ -116,6 +109,11 @@ def run_rm_training(
     """
     if config is None:
         config = RMTrainerConfig()
+
+    import torch
+    from peft import get_peft_model
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    from trl import RewardConfig, RewardTrainer
 
     logger.info("Loading tokenizer and model: %s", config.model_name)
     tokenizer = AutoTokenizer.from_pretrained(

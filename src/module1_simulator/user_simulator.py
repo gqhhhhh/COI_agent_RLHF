@@ -12,9 +12,6 @@ import os
 import uuid
 from dataclasses import dataclass, field
 
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
 from src.module1_simulator.profiles import SAMPLE_PROFILES, get_profile_prompt
 from src.utils.data_utils import save_jsonl
 
@@ -61,6 +58,9 @@ class UserSimulator:
 
     def load_model(self) -> None:
         """Load the LLM for dialogue generation."""
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+
         logger.info("Loading model: %s", self.config.model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.config.model_name,
@@ -81,6 +81,8 @@ class UserSimulator:
 
     def _generate_response(self, messages: list[dict[str, str]]) -> str:
         """Generate a single response given a conversation history."""
+        import torch
+
         text = self.tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
         )
@@ -108,12 +110,13 @@ class UserSimulator:
             None otherwise.
         """
         response_lower = response.lower()
-        for kw in END_KEYWORDS_SUCCESS:
-            if kw.lower() in response_lower:
-                return "success"
+        # Check rejection before success to handle cases like "can't accept"
         for kw in END_KEYWORDS_REJECT:
             if kw.lower() in response_lower:
                 return "rejection"
+        for kw in END_KEYWORDS_SUCCESS:
+            if kw.lower() in response_lower:
+                return "success"
         return None
 
     def generate_dialogue(self, profile: dict) -> dict:

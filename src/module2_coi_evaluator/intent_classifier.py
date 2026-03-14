@@ -8,9 +8,6 @@ from the CoI (Chain-of-Intention) framework.
 import logging
 import re
 
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
 logger = logging.getLogger(__name__)
 
 INTENT_CATEGORIES = [
@@ -64,6 +61,9 @@ class IntentClassifier:
 
     def load_model(self) -> None:
         """Load the LLM for classification."""
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+
         logger.info("Loading intent classifier model: %s", self.model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name, trust_remote_code=True, padding_side="left"
@@ -81,6 +81,8 @@ class IntentClassifier:
 
     def _generate(self, prompt: str) -> str:
         """Generate a response from the model."""
+        import torch
+
         messages = [{"role": "user", "content": prompt}]
         text = self.tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
@@ -172,8 +174,8 @@ def classify_intent_rule_based(turn: dict[str, str]) -> str:
     rejection_kw = ["not interested", "no thanks", "decline", "reject", "too low", "can't accept"]
     success_kw = ["accept", "sounds great", "i'm interested", "let's proceed", "deal", "sign me up"]
     hesitation_kw = ["think about it", "not sure", "maybe", "let me consider", "hesitant"]
-    salary_kw = ["salary", "compensation", "pay", "money", "offer", "package"]
-    benefit_kw = ["benefit", "remote", "vacation", "insurance", "perk", "work-life"]
+    salary_kw = ["salary", "compensation", "pay", "money", "package"]
+    benefit_kw = ["benefit", "remote", "vacation", "insurance", "perk", "work-life", "offer remote"]
     recommend_kw = ["position", "role", "opening", "opportunity", "job"]
     clarify_kw = ["require", "qualification", "experience needed", "what do you need"]
     followup_kw = ["next step", "follow up", "schedule", "interview", "call back"]
@@ -187,12 +189,12 @@ def classify_intent_rule_based(turn: dict[str, str]) -> str:
     for kw in hesitation_kw:
         if kw in content:
             return "hesitation"
-    for kw in salary_kw:
-        if kw in content:
-            return "salary_negotiation"
     for kw in benefit_kw:
         if kw in content:
             return "benefit_discussion"
+    for kw in salary_kw:
+        if kw in content:
+            return "salary_negotiation"
     for kw in recommend_kw:
         if kw in content:
             return "job_recommendation"

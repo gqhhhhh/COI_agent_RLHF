@@ -32,6 +32,9 @@ wandb/
 .DS_Store
 Thumbs.db
 
+# Pytest
+.pytest_cache/
+
 # Jupyter
 .ipynb_checkpoints/
 

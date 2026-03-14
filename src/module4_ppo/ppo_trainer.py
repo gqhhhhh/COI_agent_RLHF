@@ -15,17 +15,6 @@ import os
 import re
 from dataclasses import dataclass, field
 
-import torch
-from datasets import Dataset
-from peft import LoraConfig, TaskType
-from transformers import (
-    AutoModelForCausalLM,
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    pipeline,
-)
-from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer
-
 from src.utils.data_utils import load_jsonl
 
 logger = logging.getLogger(__name__)
@@ -123,6 +112,7 @@ def compute_model_reward(
         padding=True,
     ).to(device)
 
+    import torch
     with torch.no_grad():
         outputs = reward_model(**inputs)
         # The reward model outputs logits; take the scalar score
@@ -167,7 +157,7 @@ def compute_composite_reward(
 
 def prepare_ppo_dataset(
     dialogues: list[dict], tokenizer
-) -> Dataset:
+):
     """
     Prepare prompts for PPO training from dialogue data.
 
@@ -180,6 +170,8 @@ def prepare_ppo_dataset(
     Returns:
         HuggingFace Dataset with 'query' and 'input_ids' columns.
     """
+    from datasets import Dataset
+
     queries = []
     input_ids_list = []
 
@@ -225,6 +217,16 @@ def run_ppo_training(
     """
     if config is None:
         config = PPOTrainerConfig()
+
+    import torch
+    from datasets import Dataset
+    from peft import LoraConfig, TaskType
+    from transformers import (
+        AutoModelForCausalLM,
+        AutoModelForSequenceClassification,
+        AutoTokenizer,
+    )
+    from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer
 
     logger.info("Loading SFT model from: %s", config.sft_model_path)
 

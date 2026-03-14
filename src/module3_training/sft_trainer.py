@@ -9,16 +9,6 @@ import logging
 import os
 from dataclasses import dataclass, field
 
-import torch
-from datasets import Dataset
-from peft import LoraConfig, TaskType, get_peft_model
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    TrainingArguments,
-)
-from trl import SFTTrainer, SFTConfig
-
 from src.utils.data_utils import format_dialogue_for_sft, load_jsonl
 
 logger = logging.getLogger(__name__)
@@ -47,7 +37,7 @@ class SFTTrainerConfig:
     )
 
 
-def prepare_sft_dataset(dialogues: list[dict], tokenizer) -> Dataset:
+def prepare_sft_dataset(dialogues: list[dict], tokenizer):
     """
     Convert dialogue dicts to a HuggingFace Dataset for SFT training.
 
@@ -71,11 +61,13 @@ def prepare_sft_dataset(dialogues: list[dict], tokenizer) -> Dataset:
         )
         texts.append(text)
 
+    from datasets import Dataset
     return Dataset.from_dict({"text": texts})
 
 
-def build_lora_config(config: SFTTrainerConfig) -> LoraConfig:
+def build_lora_config(config: SFTTrainerConfig):
     """Create a LoRA configuration."""
+    from peft import LoraConfig, TaskType
     return LoraConfig(
         r=config.lora_r,
         lora_alpha=config.lora_alpha,
@@ -102,6 +94,11 @@ def run_sft_training(
     """
     if config is None:
         config = SFTTrainerConfig()
+
+    import torch
+    from peft import get_peft_model
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from trl import SFTTrainer, SFTConfig
 
     logger.info("Loading tokenizer and model: %s", config.model_name)
     tokenizer = AutoTokenizer.from_pretrained(

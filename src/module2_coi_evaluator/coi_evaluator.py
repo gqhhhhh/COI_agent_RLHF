@@ -13,8 +13,6 @@ from collections import Counter
 from dataclasses import dataclass
 
 import numpy as np
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from src.module2_coi_evaluator.intent_classifier import (
     INTENT_CATEGORIES,
@@ -78,6 +76,9 @@ class CoIEvaluator:
 
     def load_model(self) -> None:
         """Load the LLM for evaluation (LLM-as-a-Judge)."""
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+
         logger.info("Loading evaluator model: %s", self.config.model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.config.model_name, trust_remote_code=True, padding_side="left"
@@ -95,6 +96,8 @@ class CoIEvaluator:
 
     def _llm_judge(self, prompt: str) -> float:
         """Call LLM-as-a-Judge and parse a float score."""
+        import torch
+
         messages = [{"role": "user", "content": prompt}]
         text = self.tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
